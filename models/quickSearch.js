@@ -24,8 +24,6 @@ async function getSearchCondition() {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -72,8 +70,6 @@ async function getDeviceDetail(area, location, aircraftNumber, direction, name) 
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
