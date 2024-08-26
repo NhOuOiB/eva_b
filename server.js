@@ -14,17 +14,16 @@ const http = require('http');
 const server = http.createServer(app);
 
 const login = require('./routers/login');
-const basicInfo = require('./routers/basicInfo')
+const basicInfo = require('./routers/basicInfo');
+const excelExport = require('./routers/excelExport');
 const quickSearch = require('./routers/quickSearch');
-const permission = require('./routers/permission')
+const permission = require('./routers/permission');
 
 const corsOptions = {
   // 如果要讓 cookie 可以跨網域存取，這邊要設定 credentials
   // 且 origin 也要設定
   credentials: true,
-  origin: [
-    'http://localhost:5173',
-  ],
+  origin: ['http://localhost:5173', 'http://192.168.1.238:8017'],
 };
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -35,6 +34,7 @@ app.use((req, res, next) => {
 
 app.use('/api/', login);
 app.use('/api/basicInfo', basicInfo);
+app.use('/api/excelExport', excelExport);
 app.use('/api/quickSearch', quickSearch);
 app.use('/api/permission', permission);
 
