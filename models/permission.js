@@ -12,8 +12,6 @@ async function getAccount() {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -24,14 +22,14 @@ async function getAccountById(id) {
 
     request.input('id', mssql.Int, id);
 
-    let res = await request.query('SELECT ID, Account, Password, PermissionsID FROM Account WHERE ID = @id');
+    let res = await request.query(
+      'SELECT ID, Account, Password, PermissionsID FROM Account WHERE ID = @id'
+    );
 
     return res.recordset;
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -44,7 +42,9 @@ async function addAccount(Account, Password, PermissionsID) {
     request.input('Password', mssql.VarChar, Password);
     request.input('PermissionsID', mssql.Int, PermissionsID);
 
-    const IsRegistered = await request.query('SELECT COUNT(*) as Count FROM Account WHERE Account = @Account');
+    const IsRegistered = await request.query(
+      'SELECT COUNT(*) as Count FROM Account WHERE Account = @Account'
+    );
     if (IsRegistered.recordset[0].Count > 0) {
       return { status: false, message: '帳號重複' };
     }
@@ -59,8 +59,6 @@ async function addAccount(Account, Password, PermissionsID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -74,7 +72,9 @@ async function updateAccount(ID, Account, Password, PermissionsID) {
     request.input('Password', mssql.VarChar, Password);
     request.input('PermissionsID', mssql.Int, PermissionsID);
 
-    const IsRegistered = await request.query('SELECT COUNT(*) as Count FROM Account WHERE Account = @Account AND ID != @ID');
+    const IsRegistered = await request.query(
+      'SELECT COUNT(*) as Count FROM Account WHERE Account = @Account AND ID != @ID'
+    );
     if (IsRegistered.recordset[0].Count > 0) {
       return { status: false, message: '帳號重複' };
     }
@@ -89,8 +89,6 @@ async function updateAccount(ID, Account, Password, PermissionsID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -109,8 +107,6 @@ async function deleteAccount(ID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -125,8 +121,6 @@ async function getAccountPermissions() {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -145,12 +139,18 @@ async function getAccountPermissionsById(id) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
-async function addAccountPermissions(Name, Describe, IsBuildNeed, IsInventory, IsPermissions, IsSearch, IsWarehouse) {
+async function addAccountPermissions(
+  Name,
+  Describe,
+  IsBuildNeed,
+  IsInventory,
+  IsPermissions,
+  IsSearch,
+  IsWarehouse
+) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -173,8 +173,6 @@ async function addAccountPermissions(Name, Describe, IsBuildNeed, IsInventory, I
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -211,8 +209,6 @@ async function updateAccountPermissions(
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -223,7 +219,9 @@ async function deleteAccountPermissions(ID) {
 
     request.input('ID', mssql.Int, ID);
 
-    const IsBound = await request.query('SELECT COUNT(*) as Count FROM Account WHERE PermissionsID = @ID');
+    const IsBound = await request.query(
+      'SELECT COUNT(*) as Count FROM Account WHERE PermissionsID = @ID'
+    );
 
     if (IsBound.recordset[0].Count > 0) {
       return { status: false, message: '還有帳號綁定目前角色，無法刪除' };
@@ -237,8 +235,6 @@ async function deleteAccountPermissions(ID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
