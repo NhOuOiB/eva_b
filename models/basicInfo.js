@@ -24,8 +24,6 @@ async function getDevice(Name) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -37,13 +35,17 @@ async function addDevice(Name) {
     request.input('Name', mssql.VarChar, Name);
     request.input('isEnable', mssql.Bit, true);
 
-    const exsisted = await request.query('SELECT * FROM Device WHERE Name = @Name AND isEnable = 1');
+    const exsisted = await request.query(
+      'SELECT * FROM Device WHERE Name = @Name AND isEnable = 1'
+    );
 
     if (exsisted.recordset.length > 0) {
       return { status: false, message: '裝置名稱重複' };
     }
 
-    const result = await request.query('INSERT INTO Device (Name, isEnable) VALUES (@Name, @isEnable)');
+    const result = await request.query(
+      'INSERT INTO Device (Name, isEnable) VALUES (@Name, @isEnable)'
+    );
 
     if (result.rowsAffected[0] === 0) {
       return { status: false, message: '新增失敗' };
@@ -52,8 +54,6 @@ async function addDevice(Name) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -67,7 +67,9 @@ async function updateDevice(ID, Name) {
     request.input('ID', mssql.Int, ID);
     request.input('Name', mssql.VarChar, Name);
 
-    const exsisted = await request.query('SELECT * FROM Device WHERE Name = @Name AND isEnable = 1');
+    const exsisted = await request.query(
+      'SELECT * FROM Device WHERE Name = @Name AND isEnable = 1'
+    );
 
     if (exsisted.recordset.length > 0 && exsisted.recordset[0].ID !== ID) {
       return { status: false, message: '裝置名稱重複' };
@@ -82,8 +84,6 @@ async function updateDevice(ID, Name) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -104,8 +104,6 @@ async function deleteDevice(ID) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -141,7 +139,7 @@ async function getDeviceHistory(Name, AreaName, Model, Region, Location) {
       conditions.push(`dd.Location LIKE '%' + @Location + '%'`);
       parameters.push({ name: 'Location', type: mssql.VarChar, value: Location });
     }
- 
+
     parameters.forEach((param) => request.input(param.name, param.type, param.value));
 
     const data = await request.query(
@@ -151,8 +149,6 @@ async function getDeviceHistory(Name, AreaName, Model, Region, Location) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -164,7 +160,7 @@ async function getArea(AreaName) {
     let conditions = [];
     let parameters = [];
 
-    if (AreaName !== '' ) {
+    if (AreaName !== '') {
       conditions.push(`AreaName LIKE '%' + @AreaName + '%'`);
       parameters.push({ name: 'AreaName', type: mssql.VarChar, value: AreaName });
     }
@@ -178,8 +174,6 @@ async function getArea(AreaName) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -191,7 +185,9 @@ async function addArea(AreaName, UserStamp) {
     request.input('AreaName', mssql.VarChar, AreaName);
     request.input('UserStamp', mssql.VarChar, UserStamp);
 
-    const exsisted = await request.query('SELECT * FROM Area WHERE AreaName = @AreaName AND isEnable = 1');
+    const exsisted = await request.query(
+      'SELECT * FROM Area WHERE AreaName = @AreaName AND isEnable = 1'
+    );
 
     if (exsisted.recordset.length > 0) {
       return { status: false, message: '裝置名稱重複' };
@@ -208,8 +204,6 @@ async function addArea(AreaName, UserStamp) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -223,7 +217,9 @@ async function updateArea(ID, AreaName, UserStamp) {
     request.input('UserStamp', mssql.VarChar, UserStamp);
     request.input('DateStamp', mssql.DateTime, moment().format('YYYY-MM-DD HH:mm:ss'));
 
-    const exsisted = await request.query('SELECT * FROM Area WHERE AreaName = @AreaName AND isEnable = 1');
+    const exsisted = await request.query(
+      'SELECT * FROM Area WHERE AreaName = @AreaName AND isEnable = 1'
+    );
 
     if (exsisted.recordset.length > 0 && exsisted.recordset[0].ID !== ID) {
       return { status: false, message: '區域名稱重複' };
@@ -240,8 +236,6 @@ async function updateArea(ID, AreaName, UserStamp) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -262,8 +256,6 @@ async function deleteArea(ID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -289,8 +281,6 @@ async function getAircraftNumber(Name) {
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -302,13 +292,17 @@ async function addAircraftNumber(Name) {
     request.input('Name', mssql.VarChar, Name);
     request.input('isEnable', mssql.Bit, true);
 
-    const exsisted = await request.query('SELECT * FROM AircraftNumber WHERE Name = @Name AND isEnable = @isEnable');
+    const exsisted = await request.query(
+      'SELECT * FROM AircraftNumber WHERE Name = @Name AND isEnable = @isEnable'
+    );
 
     if (exsisted.recordset.length > 0) {
       return { status: false, message: '機號名稱重複' };
     }
 
-    const result = await request.query('INSERT INTO AircraftNumber (Name, isEnable) VALUES (@Name, @isEnable)');
+    const result = await request.query(
+      'INSERT INTO AircraftNumber (Name, isEnable) VALUES (@Name, @isEnable)'
+    );
 
     if (result.rowsAffected[0] === 0) {
       return { status: false, message: '新增失敗' };
@@ -317,8 +311,6 @@ async function addAircraftNumber(Name) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -332,7 +324,9 @@ async function updateAircraftNumber(ID, Name) {
     request.input('ID', mssql.Int, ID);
     request.input('Name', mssql.VarChar, Name);
 
-    const exsisted = await request.query('SELECT * FROM AircraftNumber WHERE Name = @Name AND isEnable = 1');
+    const exsisted = await request.query(
+      'SELECT * FROM AircraftNumber WHERE Name = @Name AND isEnable = 1'
+    );
 
     if (exsisted.recordset.length > 0 && exsisted.recordset[0].ID !== ID) {
       return { status: false, message: '機號名稱重複' };
@@ -347,8 +341,6 @@ async function updateAircraftNumber(ID, Name) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
@@ -360,7 +352,9 @@ async function deleteAircraftNumber(ID) {
     request.input('ID', mssql.Int, ID);
     request.input('isEnable', mssql.Bit, false);
 
-    const result = await request.query('UPDATE AircraftNumber SET isEnable = @isEnable WHERE ID = @ID');
+    const result = await request.query(
+      'UPDATE AircraftNumber SET isEnable = @isEnable WHERE ID = @ID'
+    );
 
     if (result.rowsAffected[0] === 0) {
       return { status: false, message: '刪除失敗' };
@@ -369,8 +363,6 @@ async function deleteAircraftNumber(ID) {
   } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
-  } finally {
-    connection.close();
   }
 }
 
