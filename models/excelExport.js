@@ -93,6 +93,7 @@ async function getExcelData(type, date) {
                 Device d
             LEFT JOIN
                 [Order] o ON d.Name = o.DeviceName AND o.OrderDate = @date AND o.Action = '需求'
+            WHERE d.isEnable = 1    
             GROUP BY
                 d.ID, d.Name, o.AircraftNumberName, o.OrderDate
         ) AS d
@@ -120,6 +121,7 @@ async function getExcelData(type, date) {
                 Device d
             LEFT JOIN
                 [Order] o ON d.Name = o.DeviceName AND o.OrderDate = @date AND o.Action = '回收'
+            WHERE d.isEnable = 1    
             GROUP BY
                 d.ID, d.Name, o.AircraftNumberName, o.OrderDate
         ) AS d
@@ -145,6 +147,7 @@ async function getExcelData(type, date) {
           d.EnoughQty
         FROM demand d
         LEFT JOIN recycle r ON d.ID = r.ID
+        ORDER BY d.ID
       `;
     } else if (type === 'month') {
       query = `
@@ -164,6 +167,7 @@ async function getExcelData(type, date) {
               Device d
           LEFT JOIN 
               [Order] o ON d.Name = o.DeviceName AND FORMAT(OrderDate, 'yyyy-MM') = '2024-08'
+          WHERE d.isEnable = 1
           GROUP BY d.ID, d.Name, o.TimeFormat, o.Qty
       ) AS d
       PIVOT (
