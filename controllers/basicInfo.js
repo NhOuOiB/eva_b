@@ -1,5 +1,6 @@
 const basicInfoModel = require('../models/basicInfo');
 const moment = require('moment');
+const { get } = require('../routers/excelexport');
 
 async function getDevice(req, res) {
   const { Name } = req.query;
@@ -28,6 +29,12 @@ async function deleteDevice(req, res) {
 async function getDeviceHistory(req, res) {
   const { Name, AreaName, Model, Region, Location } = req.query;
   let data = await basicInfoModel.getDeviceHistory(Name, AreaName, Model, Region, Location);
+  res.json(data);
+}
+
+async function getDeviceDetail(req, res) {
+  const { Name, AreaName, Model, Region, Location } = req.query;
+  let data = await basicInfoModel.getDeviceDetail(Name, AreaName, Model, Region, Location);
   res.json(data);
 }
 
@@ -79,12 +86,18 @@ async function deleteAircraftNumber(req, res) {
   res.json(data);
 }
 
+async function getOptions(req, res) {
+  let data = await basicInfoModel.getOptions();
+  res.json(data);
+}
+
 module.exports = {
   getDevice,
   addDevice,
   updateDevice,
   deleteDevice,
   getDeviceHistory,
+  getDeviceDetail,
   getArea,
   addArea,
   updateArea,
@@ -93,4 +106,5 @@ module.exports = {
   addAircraftNumber,
   updateAircraftNumber,
   deleteAircraftNumber,
+  getOptions,
 };

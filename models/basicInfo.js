@@ -1,6 +1,7 @@
 const pool = require('../utils/db');
 const mssql = require('mssql');
 const moment = require('moment');
+const { get } = require('../routers/excelexport');
 
 async function getDevice(Name) {
   let connection = await pool.connect();
@@ -143,8 +144,54 @@ async function getDeviceHistory(Name, AreaName, Model, Region, Location) {
     parameters.forEach((param) => request.input(param.name, param.type, param.value));
 
     const data = await request.query(
-      `SELECT dh.ID, dh.EPC, a.AreaName, dd.Name, dd.Model, dd.Describe, dd.IsRFID, dd.Region, dd.Location, dd.Code, dh.Latitude, dh.Longitude, dh.RecordTime FROM DeviceHistory dh INNER JOIN DeviceDetail dd ON dh.EPC = dd.EPC INNER JOIN Area a ON dh.AreaID = a.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY RecordTime DESC`
+      `SELECT dh.ID, dh.EPC, a.AreaName, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.No, dh.Latitude, dh.Longitude, dh.RecordTime FROM DeviceHistory dh INNER JOIN DeviceDetail dd ON dh.EPC = dd.EPC INNER JOIN Area a ON dh.AreaID = a.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY RecordTime DESC`
     );
+    return data.recordset;
+  } catch (error) {
+    console.log(error);
+    return { message: '伺服器錯誤' };
+  }
+}
+
+async function getDeviceDetail(Name, AreaName, Model, Region, Location) {
+  let connection = await pool.connect();
+  try {
+    const request = new mssql.Request(connection);
+
+    let conditions = [];
+    let parameters = [];
+
+    if (Name !== '' && Name !== undefined) {
+      conditions.push(`dd.Name LIKE '%' + @Name + '%'`);
+      parameters.push({ name: 'Name', type: mssql.VarChar, value: Name });
+    }
+
+    if (AreaName !== '' && AreaName !== undefined) {
+      conditions.push(`a.AreaName LIKE '%' + @AreaName + '%'`);
+      parameters.push({ name: 'AreaName', type: mssql.VarChar, value: AreaName });
+    }
+
+    if (Model !== '' && Model !== undefined) {
+      conditions.push(`dd.Model LIKE '%' + @Model + '%'`);
+      parameters.push({ name: 'Model', type: mssql.VarChar, value: Model });
+    }
+
+    if (Region !== '' && Region !== undefined) {
+      conditions.push(`dd.Region LIKE '%' + @Region + '%'`);
+      parameters.push({ name: 'Region', type: mssql.VarChar, value: Region });
+    }
+
+    if (Location !== '' && Location !== undefined) {
+      conditions.push(`dd.Location LIKE '%' + @Location + '%'`);
+      parameters.push({ name: 'Location', type: mssql.VarChar, value: Location });
+    }
+
+    parameters.forEach((param) => request.input(param.name, param.type, param.value));
+
+    let data = await request.query(
+      `SELECT dd.ID, d.ID AS DeviceID, dd.EPC, dd.AreaID, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.Direction, dd.No, dd.Longitude, dd.Latitude, dd.RecordTime FROM DeviceDetail dd LEFT JOIN Area a ON dd.AreaID = a.ID LEFT JOIN Device d ON dd.DeviceID = d.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}`
+    );
+
     return data.recordset;
   } catch (error) {
     console.log(error);
@@ -366,12 +413,28 @@ async function deleteAircraftNumber(ID) {
   }
 }
 
+async function getOptions() {
+  try {
+    const device = await getDevice('');
+    const area = await getArea('');
+
+    return {
+      DeviceID: device,
+      AreaID: area,
+    };
+  } catch (error) {
+    console.log(error);
+    return { message: '伺服器錯誤' };
+  }
+}
+
 module.exports = {
   getDevice,
   addDevice,
   updateDevice,
   deleteDevice,
   getDeviceHistory,
+  getDeviceDetail,
   getArea,
   addArea,
   updateArea,
@@ -380,4 +443,5 @@ module.exports = {
   addAircraftNumber,
   updateAircraftNumber,
   deleteAircraftNumber,
+  getOptions,
 };
