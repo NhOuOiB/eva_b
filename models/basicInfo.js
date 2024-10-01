@@ -21,7 +21,7 @@ async function getDevice(Name) {
     const data = await request.query(
       `SELECT ID, Name FROM Device WHERE isEnable = 1 ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}`
     );
-    return data.recordset;
+    return { data: data.recordset };
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
@@ -108,7 +108,7 @@ async function deleteDevice(ID) {
   }
 }
 
-async function getDeviceHistory(Name, AreaName, Model, Region, Location) {
+async function getDeviceHistory(Name, AreaName, Model, Region, Location, page, pageSize) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -141,19 +141,26 @@ async function getDeviceHistory(Name, AreaName, Model, Region, Location) {
       parameters.push({ name: 'Location', type: mssql.VarChar, value: Location });
     }
 
+    const pageNumber = page ? parseInt(page) : 1;
+    const offset = (pageNumber - 1) * pageSize;
+
     parameters.forEach((param) => request.input(param.name, param.type, param.value));
 
-    const data = await request.query(
-      `SELECT dh.ID, dh.EPC, a.AreaName, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.No, dh.Latitude, dh.Longitude, dh.RecordTime FROM DeviceHistory dh INNER JOIN DeviceDetail dd ON dh.EPC = dd.EPC INNER JOIN Area a ON dh.AreaID = a.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY RecordTime DESC`
+    const totalCount = await request.query(
+      `SELECT COUNT(*) AS totalCount FROM DeviceHistory dh LEFT JOIN DeviceDetail dd ON dh.EPC = dd.EPC LEFT JOIN Area a ON dh.AreaID = a.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}`
     );
-    return data.recordset;
+
+    const data = await request.query(
+      `SELECT dh.ID, dh.EPC, a.AreaName, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.No, dh.Latitude, dh.Longitude, dh.RecordTime FROM DeviceHistory dh LEFT JOIN DeviceDetail dd ON dh.EPC = dd.EPC LEFT JOIN Area a ON dh.AreaID = a.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY RecordTime DESC OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY`
+    );
+    return { totalCount: totalCount.recordset[0].totalCount, data: data.recordset };
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
   }
 }
 
-async function getDeviceDetail(Name, AreaName, Model, Region, Location) {
+async function getDeviceDetail(Name, AreaID, Model, Region, Location, page, pageSize) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -165,10 +172,10 @@ async function getDeviceDetail(Name, AreaName, Model, Region, Location) {
       conditions.push(`dd.Name LIKE '%' + @Name + '%'`);
       parameters.push({ name: 'Name', type: mssql.VarChar, value: Name });
     }
-
-    if (AreaName !== '' && AreaName !== undefined) {
-      conditions.push(`a.AreaName LIKE '%' + @AreaName + '%'`);
-      parameters.push({ name: 'AreaName', type: mssql.VarChar, value: AreaName });
+    console.log(AreaID);
+    if (AreaID !== '' && AreaID !== undefined) {
+      conditions.push(`dd.AreaID = @AreaID`);
+      parameters.push({ name: 'AreaID', type: mssql.VarChar, value: AreaID });
     }
 
     if (Model !== '' && Model !== undefined) {
@@ -186,16 +193,110 @@ async function getDeviceDetail(Name, AreaName, Model, Region, Location) {
       parameters.push({ name: 'Location', type: mssql.VarChar, value: Location });
     }
 
+    const pageNumber = page ? parseInt(page) : 1;
+    const offset = (pageNumber - 1) * pageSize;
+
     parameters.forEach((param) => request.input(param.name, param.type, param.value));
 
-    let data = await request.query(
-      `SELECT dd.ID, d.ID AS DeviceID, dd.EPC, dd.AreaID, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.Direction, dd.No, dd.Longitude, dd.Latitude, dd.RecordTime FROM DeviceDetail dd LEFT JOIN Area a ON dd.AreaID = a.ID LEFT JOIN Device d ON dd.DeviceID = d.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}`
+    const totalCount = await request.query(
+      `SELECT COUNT(*) AS totalCount FROM DeviceDetail dd LEFT JOIN Area a ON dd.AreaID = a.ID LEFT JOIN Device d ON dd.DeviceID = d.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}`
     );
 
-    return data.recordset;
+    let data = await request.query(
+      `SELECT dd.ID, dd.DeviceID, dd.EPC, dd.AreaID, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.Direction, dd.No, dd.ETMS, dd.Longitude, dd.Latitude, dd.RecordTime FROM DeviceDetail dd LEFT JOIN Area a ON dd.AreaID = a.ID LEFT JOIN Device d ON dd.DeviceID = d.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY d.Name OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY`
+    );
+    console.log(data.recordset);
+    return { totalCount: totalCount.recordset[0].totalCount, data: data.recordset };
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
+  }
+}
+
+async function addDeviceDetail(
+  DeviceID,
+  AreaID,
+  Name,
+  Model,
+  Region,
+  Location,
+  Direction,
+  No,
+  ETMS,
+  UserStamp
+) {
+  let connection = await pool.connect();
+  try {
+    const request = new mssql.Request(connection);
+
+    request.input('DeviceID', mssql.Int, DeviceID);
+    request.input('AreaID', mssql.Int, AreaID);
+    request.input('Name', mssql.VarChar, Name);
+    request.input('Model', mssql.VarChar, Model);
+    request.input('Region', mssql.VarChar, Region);
+    request.input('Location', mssql.VarChar, Location);
+    request.input('Direction', mssql.VarChar, Direction);
+    request.input('No', mssql.VarChar, No);
+    request.input('ETMS', mssql.VarChar, ETMS);
+    request.input('RecordTime', mssql.DateTime, moment().format('YYYY-MM-DD HH:mm:ss'));
+    request.input('UserStamp', mssql.VarChar, UserStamp);
+
+    const result = await request.query(
+      'INSERT INTO DeviceDetail (DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, RecordTime, UserStamp) VALUES (@DeviceID, @AreaID, @Name, @Model, @Region, @Location, @Direction, @No, @ETMS, @RecordTime, @UserStamp)'
+    );
+
+    if (result.rowsAffected[0] === 0) {
+      return { status: false, message: '新增失敗' };
+    }
+    return { status: true, message: '新增成功' };
+  } catch (error) {
+    console.log(error);
+    return { status: false, message: '伺服器錯誤' };
+  }
+}
+
+async function updateDeviceDetail(
+  ID,
+  DeviceID,
+  AreaID,
+  Name,
+  Model,
+  Region,
+  Location,
+  Direction,
+  No,
+  ETMS,
+  UserStamp
+) {
+  let connection = await pool.connect();
+  try {
+    const request = new mssql.Request(connection);
+
+    request.input('ID', mssql.Int, ID);
+    request.input('DeviceID', mssql.Int, DeviceID);
+    request.input('AreaID', mssql.Int, AreaID);
+    request.input('Name', mssql.VarChar, Name);
+    request.input('Model', mssql.VarChar, Model);
+    request.input('Region', mssql.VarChar, Region);
+    request.input('Location', mssql.VarChar, Location);
+    request.input('Direction', mssql.VarChar, Direction);
+    request.input('No', mssql.VarChar, No);
+    request.input('ETMS', mssql.VarChar, ETMS);
+    request.input('RecordTime', mssql.DateTime, moment().format('YYYY-MM-DD HH:mm:ss'));
+    request.input('UserStamp', mssql.VarChar, UserStamp);
+
+    const result = await request.query(
+      'UPDATE DeviceDetail SET DeviceID = @DeviceID, AreaID = @AreaID, Name = @Name, Model = @Model, Region = @Region, Location = @Location, Direction = @Direction, No = @No, ETMS = @ETMS, RecordTime = @RecordTime, UserStamp = @UserStamp WHERE ID = @ID'
+    );
+
+    if (result.rowsAffected[0] === 0) {
+      return { status: false, message: '修改失敗' };
+    }
+    return { status: true, message: '修改成功' };
+  }
+  catch (error) {
+    console.log(error);
+    return { status: false, message: '伺服器錯誤' };
   }
 }
 
@@ -217,7 +318,7 @@ async function getArea(AreaName) {
     const data = await request.query(
       `SELECT ID, AreaName FROM Area WHERE isEnable = 1 ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}`
     );
-    return data.recordset;
+    return { data: data.recordset };
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
@@ -324,7 +425,7 @@ async function getAircraftNumber(Name) {
     const data = await request.query(
       `SELECT ID, Name FROM AircraftNumber WHERE isEnable = 1 ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}`
     );
-    return data.recordset;
+    return { data: data.recordset };
   } catch (error) {
     console.log(error);
     return { message: '伺服器錯誤' };
@@ -419,8 +520,8 @@ async function getOptions() {
     const area = await getArea('');
 
     return {
-      DeviceID: device,
-      AreaID: area,
+      DeviceID: device.data,
+      AreaID: area.data,
     };
   } catch (error) {
     console.log(error);
@@ -435,6 +536,8 @@ module.exports = {
   deleteDevice,
   getDeviceHistory,
   getDeviceDetail,
+  addDeviceDetail,
+  updateDeviceDetail,
   getArea,
   addArea,
   updateArea,

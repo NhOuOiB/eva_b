@@ -27,14 +27,49 @@ async function deleteDevice(req, res) {
 }
 
 async function getDeviceHistory(req, res) {
-  const { Name, AreaName, Model, Region, Location } = req.query;
-  let data = await basicInfoModel.getDeviceHistory(Name, AreaName, Model, Region, Location);
+  const { Name, AreaName, Model, Region, Location, page, pageSize } = req.query;
+  let data = await basicInfoModel.getDeviceHistory(Name, AreaName, Model, Region, Location, page, pageSize);
   res.json(data);
 }
 
 async function getDeviceDetail(req, res) {
-  const { Name, AreaName, Model, Region, Location } = req.query;
-  let data = await basicInfoModel.getDeviceDetail(Name, AreaName, Model, Region, Location);
+  const { Name, AreaID, Model, Region, Location, page, pageSize } = req.query;
+  let data = await basicInfoModel.getDeviceDetail(Name, AreaID, Model, Region, Location, page, pageSize);
+  res.json(data);
+}
+
+async function addDeviceDetail(req, res) {
+  const {
+    DeviceID,
+    AreaID,
+    Name,
+    Model,
+    Region,
+    Location,
+    Direction,
+    No,
+    ETMS,
+    UserStamp,
+  } = req.body;
+  let data = await basicInfoModel.addDeviceDetail(DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp);
+  res.json(data);
+}
+
+async function updateDeviceDetail(req, res) {
+  const {
+    ID,
+    DeviceID,
+    AreaID,
+    Name,
+    Model,
+    Region,
+    Location,
+    Direction,
+    No,
+    ETMS,
+    UserStamp,
+  } = req.body;
+  let data = await basicInfoModel.updateDeviceDetail(ID, DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp);
   res.json(data);
 }
 
@@ -98,6 +133,8 @@ module.exports = {
   deleteDevice,
   getDeviceHistory,
   getDeviceDetail,
+  addDeviceDetail,
+  updateDeviceDetail,
   getArea,
   addArea,
   updateArea,

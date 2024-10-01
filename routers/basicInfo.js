@@ -14,6 +14,10 @@ router.get('/getDeviceHistory', basicInfoController.getDeviceHistory);
 
 router.get('/getDeviceDetail', basicInfoController.getDeviceDetail);
 
+router.post('/addDeviceDetail', basicInfoController.addDeviceDetail);
+
+router.put('/updateDeviceDetail', basicInfoController.updateDeviceDetail);
+
 router.get('/getArea', basicInfoController.getArea);
 
 router.post('/addArea', basicInfoController.addArea);
