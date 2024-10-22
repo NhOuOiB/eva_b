@@ -108,7 +108,7 @@ async function deleteDevice(ID) {
   }
 }
 
-async function getDeviceHistory(Name, AreaName, Model, Region, Location, page, pageSize) {
+async function getDeviceHistory(Name, AreaName, Model, Region, Location, EPC, No, page, pageSize) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -139,6 +139,16 @@ async function getDeviceHistory(Name, AreaName, Model, Region, Location, page, p
     if (Location !== '' && Location !== undefined) {
       conditions.push(`dd.Location LIKE '%' + @Location + '%'`);
       parameters.push({ name: 'Location', type: mssql.VarChar, value: Location });
+    }
+
+    if (EPC !== '' && EPC !== undefined) {
+      conditions.push(`dh.EPC LIKE '%' + @EPC + '%'`);
+      parameters.push({ name: 'EPC', type: mssql.VarChar, value: EPC });
+    }
+
+    if (No !== '' && No !== undefined) {
+      conditions.push(`dd.No LIKE '%' + @No + '%'`);
+      parameters.push({ name: 'No', type: mssql.VarChar, value: No });
     }
 
     const pageNumber = page ? parseInt(page) : 1;
@@ -203,9 +213,15 @@ async function getDeviceDetail(Name, AreaID, Model, Region, Location, page, page
     );
 
     let data = await request.query(
-      `SELECT dd.ID, dd.DeviceID, dd.EPC, dd.AreaID, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.Direction, dd.No, dd.ETMS, dd.Longitude, dd.Latitude, dd.RecordTime FROM DeviceDetail dd LEFT JOIN Area a ON dd.AreaID = a.ID LEFT JOIN Device d ON dd.DeviceID = d.ID ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} ORDER BY d.Name OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY`
+      `SELECT dd.ID, dd.DeviceID, dd.EPC, dd.AreaID, dd.Name, dd.Model, dd.IsRFID, dd.Region, dd.Location, dd.Direction, dd.No, dd.ETMS, dd.Longitude, dd.Latitude, dd.RecordTime 
+      FROM DeviceDetail dd 
+      LEFT JOIN Area a ON dd.AreaID = a.ID 
+      LEFT JOIN Device d ON dd.DeviceID = d.ID 
+      ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''} 
+      ORDER BY d.Name, dd.ID
+      OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY`
     );
-    console.log(data.recordset);
+    console.log(pageNumber, offset, pageSize);
     return { totalCount: totalCount.recordset[0].totalCount, data: data.recordset };
   } catch (error) {
     console.log(error);
@@ -293,8 +309,7 @@ async function updateDeviceDetail(
       return { status: false, message: '修改失敗' };
     }
     return { status: true, message: '修改成功' };
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
     return { status: false, message: '伺服器錯誤' };
   }

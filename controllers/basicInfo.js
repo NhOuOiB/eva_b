@@ -27,19 +27,39 @@ async function deleteDevice(req, res) {
 }
 
 async function getDeviceHistory(req, res) {
-  const { Name, AreaName, Model, Region, Location, page, pageSize } = req.query;
-  let data = await basicInfoModel.getDeviceHistory(Name, AreaName, Model, Region, Location, page, pageSize);
+  const { Name, AreaName, Model, Region, Location, EPC, No, page, pageSize } = req.query;
+  let data = await basicInfoModel.getDeviceHistory(
+    Name,
+    AreaName,
+    Model,
+    Region,
+    Location,
+    EPC,
+    No,
+    page,
+    pageSize
+  );
   res.json(data);
 }
 
 async function getDeviceDetail(req, res) {
   const { Name, AreaID, Model, Region, Location, page, pageSize } = req.query;
-  let data = await basicInfoModel.getDeviceDetail(Name, AreaID, Model, Region, Location, page, pageSize);
+  let data = await basicInfoModel.getDeviceDetail(
+    Name,
+    AreaID,
+    Model,
+    Region,
+    Location,
+    page,
+    pageSize
+  );
   res.json(data);
 }
 
 async function addDeviceDetail(req, res) {
-  const {
+  const { DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp } =
+    req.body;
+  let data = await basicInfoModel.addDeviceDetail(
     DeviceID,
     AreaID,
     Name,
@@ -49,14 +69,15 @@ async function addDeviceDetail(req, res) {
     Direction,
     No,
     ETMS,
-    UserStamp,
-  } = req.body;
-  let data = await basicInfoModel.addDeviceDetail(DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp);
+    UserStamp
+  );
   res.json(data);
 }
 
 async function updateDeviceDetail(req, res) {
-  const {
+  const { ID, DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp } =
+    req.body;
+  let data = await basicInfoModel.updateDeviceDetail(
     ID,
     DeviceID,
     AreaID,
@@ -67,9 +88,8 @@ async function updateDeviceDetail(req, res) {
     Direction,
     No,
     ETMS,
-    UserStamp,
-  } = req.body;
-  let data = await basicInfoModel.updateDeviceDetail(ID, DeviceID, AreaID, Name, Model, Region, Location, Direction, No, ETMS, UserStamp);
+    UserStamp
+  );
   res.json(data);
 }
 
