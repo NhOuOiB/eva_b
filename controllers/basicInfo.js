@@ -118,20 +118,20 @@ async function deleteArea(req, res) {
 }
 
 async function getAircraftNumber(req, res) {
-  const { Name } = req.query;
-  let data = await basicInfoModel.getAircraftNumber(Name);
+  const { Name, Model } = req.query;
+  let data = await basicInfoModel.getAircraftNumber(Name, Model);
   res.json(data);
 }
 
 async function addAircraftNumber(req, res) {
-  const { Name } = req.body;
-  let data = await basicInfoModel.addAircraftNumber(Name);
+  const { Name, Model } = req.body;
+  let data = await basicInfoModel.addAircraftNumber(Name, Model);
   res.json(data);
 }
 
 async function updateAircraftNumber(req, res) {
-  const { ID, Name } = req.body;
-  let data = await basicInfoModel.updateAircraftNumber(ID, Name);
+  const { ID, Name, Model } = req.body;
+  let data = await basicInfoModel.updateAircraftNumber(ID, Name, Model);
   res.json(data);
 }
 

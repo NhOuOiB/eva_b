@@ -422,7 +422,7 @@ async function deleteArea(ID) {
   }
 }
 
-async function getAircraftNumber(Name) {
+async function getAircraftNumber(Name, Model) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -435,10 +435,15 @@ async function getAircraftNumber(Name) {
       parameters.push({ name: 'Name', type: mssql.VarChar, value: Name });
     }
 
+    if (Model !== '') {
+      conditions.push(`Model LIKE '%' + @Model + '%'`);
+      parameters.push({ name: 'Model', type: mssql.VarChar, value: Model });
+    }
+
     parameters.forEach((param) => request.input(param.name, param.type, param.value));
 
     const data = await request.query(
-      `SELECT ID, Name FROM AircraftNumber WHERE isEnable = 1 ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}`
+      `SELECT ID, Name, Model FROM AircraftNumber WHERE isEnable = 1 ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}`
     );
     return { data: data.recordset };
   } catch (error) {
@@ -447,12 +452,13 @@ async function getAircraftNumber(Name) {
   }
 }
 
-async function addAircraftNumber(Name) {
+async function addAircraftNumber(Name, Model) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
 
     request.input('Name', mssql.VarChar, Name);
+    request.input('Model', mssql.VarChar, Model);
     request.input('isEnable', mssql.Bit, true);
 
     const exsisted = await request.query(
@@ -464,7 +470,7 @@ async function addAircraftNumber(Name) {
     }
 
     const result = await request.query(
-      'INSERT INTO AircraftNumber (Name, isEnable) VALUES (@Name, @isEnable)'
+      'INSERT INTO AircraftNumber (Name, Model, isEnable) VALUES (@Name, @Model, @isEnable)'
     );
 
     if (result.rowsAffected[0] === 0) {
@@ -477,7 +483,7 @@ async function addAircraftNumber(Name) {
   }
 }
 
-async function updateAircraftNumber(ID, Name) {
+async function updateAircraftNumber(ID, Name, Model) {
   let connection = await pool.connect();
   try {
     const request = new mssql.Request(connection);
@@ -486,6 +492,7 @@ async function updateAircraftNumber(ID, Name) {
 
     request.input('ID', mssql.Int, ID);
     request.input('Name', mssql.VarChar, Name);
+    request.input('Model', mssql.VarChar, Model);
 
     const exsisted = await request.query(
       'SELECT * FROM AircraftNumber WHERE Name = @Name AND isEnable = 1'
@@ -495,7 +502,9 @@ async function updateAircraftNumber(ID, Name) {
       return { status: false, message: '機號名稱重複' };
     }
 
-    const result = await request.query('UPDATE AircraftNumber SET Name = @Name WHERE ID = @ID');
+    const result = await request.query(
+      'UPDATE AircraftNumber SET Name = @Name, Model = @Model WHERE ID = @ID'
+    );
 
     if (result.rowsAffected[0] === 0) {
       return { status: false, message: '修改失敗' };
